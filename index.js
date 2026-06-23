@@ -71,10 +71,7 @@ app.get("/api/all/books", async (req, res) => {
         const perPage = req.query.perPage || 12;
         const skipItems = (page - 1) * perPage
 
-        const total = await bookcollection.countDocuments(query);
-        const cursor = bookcollection.find(query).skip(skipItems).limit(perPage);
-        const books = await cursor.toArray();
-        return res.send({ total, books });
+
     }
     
   const result = await bookcollection.find(query).toArray();
