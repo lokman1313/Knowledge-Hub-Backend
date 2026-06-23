@@ -76,6 +76,15 @@ app.get("/api/all/books", async (req, res) => {
         const books = await cursor.toArray();
         return res.send({ total, books });
     }
+
+    app.get("/api/book/:id",async(req,res)=>{
+      const id = req.params.id
+      const query ={
+        _id : new ObjectId(id)
+      }
+      const result = await bookcollection.findOne(query)
+      res.send(result)
+    })
     
   const result = await bookcollection.find(query).toArray();
   res.send(result || []); 
