@@ -24,10 +24,61 @@ async function run() {
   try {
     await client.connect();
     const database = client.db("knowledgehub");
+    const userCollection =database.collection("user")
+    const sessionCollection = database.collection('session');
     const bookcollection = database.collection("books")
     const paymentCollection = database.collection("payments")
 
 
+    //verify token
+ const verifyToken =async (req, res, next) =>{
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ message: "Unauthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  
+  if(!token){
+   return res.status(401).json({ message: "Unauthorized access" }); 
+  }
+  const query = { token : token}
+  const session = await sessionCollection.findOne(query)
+  
+  const userId = session.userId
+
+  const userQuery={
+    _id : userId
+  }
+  const user = await userCollection.findOne(userQuery)
+  if (!user) {
+                return res.status(401).send({ message: 'unauthorized access' })
+            }
+            req.user = user;
+  next()
+}
+
+    //book delevary releted query
+    app.get("/api/delevary/user", verifyToken, async (req, res) => {
+  console.log("USER:", req.user);
+
+  const userId = req.user._id.toString();
+  const query = {
+    userId,
+    delevaryStatus: "delevared",
+  };
+  const result = await paymentCollection.find(query).toArray();
+  res.send(result);
+});
+    //book delevary releted query
+    app.get("/api/delevary/librarian",verifyToken,async(req,res)=>{
+    const userId = req.user._id.toString();
+    
+    const result = await paymentCollection.find({userId}).toArray();
+    res.send(result || [])
+  
+    })
+    
     //payment releted
     app.post("/api/payments",async(req,res)=>{
       const history = req.body
@@ -36,7 +87,7 @@ async function run() {
     })
 
     //Books releted 
-app.post("/api/books",async(req,res)=>{
+  app.post("/api/books",async(req,res)=>{
   const book = req.body
   const newBook ={
     ...book,
