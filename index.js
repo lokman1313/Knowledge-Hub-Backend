@@ -25,6 +25,15 @@ async function run() {
     await client.connect();
     const database = client.db("knowledgehub");
     const bookcollection = database.collection("books")
+    const paymentCollection = database.collection("payments")
+
+
+    //payment releted
+    app.post("/api/payments",async(req,res)=>{
+      const history = req.body
+      const result = await paymentCollection.insertOne(history)
+      res.send(result)
+    })
 
     //Books releted 
 app.post("/api/books",async(req,res)=>{
@@ -47,6 +56,17 @@ app.get("/api/books", async (req, res) => {
   const result = await bookcollection.find(query).toArray();
   res.send(result || []); 
 });
+
+//detels page
+  app.get("/api/book/:id",async(req,res)=>{
+    const id = req.params.id
+    const query ={
+      _id : new ObjectId(id)
+    }
+    const result = await bookcollection.findOne(query)
+    res.send(result)
+  })
+  
 
 //browse er jonno data get
 app.get("/api/all/books", async (req, res) => {
@@ -77,19 +97,9 @@ app.get("/api/all/books", async (req, res) => {
         return res.send({ total, books });
     }
 
-    app.get("/api/book/:id",async(req,res)=>{
-      const id = req.params.id
-      const query ={
-        _id : new ObjectId(id)
-      }
-      const result = await bookcollection.findOne(query)
-      res.send(result)
-    })
-    
-  const result = await bookcollection.find(query).toArray();
-  res.send(result || []); 
-});
-
+    const result = await bookcollection.find(query).toArray();
+    res.send(result || []); 
+  });
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
