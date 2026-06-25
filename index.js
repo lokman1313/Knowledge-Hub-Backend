@@ -79,7 +79,15 @@ async function run() {
       res.send(result);
     });
 
-
+    app.patch("/api/approveBooks/:id",async(req,res)=>{
+      const id = req.params.id
+      const update = req.body
+      const query ={
+        _id : new ObjectId(id)
+      }
+      const result = await bookcollection.updateOne(query,{$set : update})
+      res.send(result)
+    })
     //----------------------------------------------------------
 
     //book delevary releted query
