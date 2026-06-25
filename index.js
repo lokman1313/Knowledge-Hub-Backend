@@ -58,6 +58,16 @@ async function run() {
       next();
     };
 
+
+    //-----------for admins only------------------------------
+
+    app.get("/api/all/tranjections",async(req,res)=>{
+      const result = await paymentCollection.find({}).toArray()
+      res.send(result)
+    })
+
+    //----------------------------------------------------------
+
     //book delevary releted query
     app.get("/api/delevary/user", verifyToken, async (req, res) => {
       const userId = req.user._id.toString();
