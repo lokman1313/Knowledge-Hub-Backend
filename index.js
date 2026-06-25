@@ -60,8 +60,6 @@ async function run() {
 
     //book delevary releted query
     app.get("/api/delevary/user", verifyToken, async (req, res) => {
-      console.log("USER:", req.user);
-
       const userId = req.user._id.toString();
       const query = {
         userId,
@@ -71,12 +69,36 @@ async function run() {
       res.send(result);
     });
     //book delevary releted query
-    app.get("/api/delevary/librarian", verifyToken, async (req, res) => {
+    app.get("/api/notDelevary/user", verifyToken, async (req, res) => {
       const userId = req.user._id.toString();
 
       const result = await paymentCollection.find({ userId }).toArray();
       res.send(result || []);
     });
+
+
+
+//librarian delevary history
+app.get("/api/delivery/librarian", verifyToken, async (req, res) => {
+  try {
+    const librarianId = req.user._id.toString();
+    const result = await paymentCollection.find({ librarianId }).toArray(); 
+    res.send(result);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch librarian deliveries" });
+  }
+});
+
+//delevary confrimetion
+app.patch("/api/confrim/delevary/:id",async(req,res)=>{
+  const id = req.params.id
+  const updatedData = req.body
+  const query = {
+    _id : new ObjectId(id)
+  }
+  const result = await paymentCollection.updateOne(query,{$set : updatedData})
+  res.send(result)
+})
 
     //payment releted
     app.post("/api/payments", async (req, res) => {
@@ -115,6 +137,24 @@ async function run() {
       };
       const result = await bookcollection.findOne(query);
       res.send(result);
+    });
+
+    //book patch releted
+    app.patch("/api/book/unpublish/:id", async (req, res) => {
+      const id = req.params.id;
+      const updated = req.body;
+      const query = {
+        _id: new ObjectId(id),
+      };
+      const result = await bookcollection.updateOne(query, { $set: updated });
+    });
+    app.patch("/api/book/publish/:id", async (req, res) => {
+      const id = req.params.id;
+      const updated = req.body;
+      const query = {
+        _id: new ObjectId(id),
+      };
+      const result = await bookcollection.updateOne(query, { $set: updated });
     });
 
     //browse er jonno data get
@@ -172,18 +212,31 @@ async function run() {
 
     app.get("/api/my/reviews/:userId", async (req, res) => {
       const userId = req.params.userId;
-      const result = await reviewCollection.find({userId : userId}).toArray();
+      const result = await reviewCollection.find({ userId: userId }).toArray();
       res.send(result);
     });
 
     app.patch("/reviews/:id", async (req, res) => {
-    const id = req.params.id;
-    const updatedData = req.body
-    const quari = {
-      _id : new ObjectId(id)
-    }
-    const result = await reviewCollection.updateOne(quari,{$set:updatedData});
-    res.send(result);
+      const id = req.params.id;
+      const updatedData = req.body;
+      const quari = {
+        _id: new ObjectId(id),
+      };
+      const result = await reviewCollection.updateOne(quari, {
+        $set: updatedData,
+      });
+      res.send(result);
+    });
+
+    app.delete("/api/delete/review/:id", async (req, res) => {
+      const id = req.params.id;
+
+      const query = {
+        _id: new ObjectId(id),
+      };
+
+      const result = await reviewCollection.deleteOne(query);
+      res.send(result);
     });
 
     await client.db("admin").command({ ping: 1 });
