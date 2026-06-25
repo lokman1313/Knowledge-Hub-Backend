@@ -58,13 +58,27 @@ async function run() {
       next();
     };
 
-
     //-----------for admins only------------------------------
 
-    app.get("/api/all/tranjections",async(req,res)=>{
-      const result = await paymentCollection.find({}).toArray()
-      res.send(result)
-    })
+    app.get("/api/all/tranjections", async (req, res) => {
+      const result = await paymentCollection
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray();
+      res.send(result);
+    });
+
+    app.get("/api/pendingBooks", async (req, res) => {
+      const query = { approvalStatus: "pending" };
+
+      const result = await bookcollection
+        .find(query)
+        .sort({ createdAt: -1 })
+        .toArray();
+
+      res.send(result);
+    });
+
 
     //----------------------------------------------------------
 
@@ -86,29 +100,31 @@ async function run() {
       res.send(result || []);
     });
 
+    //librarian delevary history
+    app.get("/api/delivery/librarian", verifyToken, async (req, res) => {
+      try {
+        const librarianId = req.user._id.toString();
+        const result = await paymentCollection.find({ librarianId }).toArray();
+        res.send(result);
+      } catch (err) {
+        res
+          .status(500)
+          .json({ message: "Failed to fetch librarian deliveries" });
+      }
+    });
 
-
-//librarian delevary history
-app.get("/api/delivery/librarian", verifyToken, async (req, res) => {
-  try {
-    const librarianId = req.user._id.toString();
-    const result = await paymentCollection.find({ librarianId }).toArray(); 
-    res.send(result);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch librarian deliveries" });
-  }
-});
-
-//delevary confrimetion
-app.patch("/api/confrim/delevary/:id",async(req,res)=>{
-  const id = req.params.id
-  const updatedData = req.body
-  const query = {
-    _id : new ObjectId(id)
-  }
-  const result = await paymentCollection.updateOne(query,{$set : updatedData})
-  res.send(result)
-})
+    //delevary confrimetion
+    app.patch("/api/confrim/delevary/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedData = req.body;
+      const query = {
+        _id: new ObjectId(id),
+      };
+      const result = await paymentCollection.updateOne(query, {
+        $set: updatedData,
+      });
+      res.send(result);
+    });
 
     //payment releted
     app.post("/api/payments", async (req, res) => {
