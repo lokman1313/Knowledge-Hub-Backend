@@ -176,7 +176,15 @@ async function run() {
       res.send(result);
     });
 
-    
+    app.patch("/reviews/:id", async (req, res) => {
+    const id = req.params.id;
+    const updatedData = req.body
+    const quari = {
+      _id : new ObjectId(id)
+    }
+    const result = await reviewCollection.updateOne(quari,{$set:updatedData});
+    res.send(result);
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
