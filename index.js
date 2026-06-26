@@ -20,12 +20,13 @@ const client = new MongoClient(uri, {
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
-// async function run() {
-//   try {
-//     await client.connect();
-client.connect(() => {
-    console.log('connecting to MOngo db');
-}).catch(console.dir)
+async function run() {
+  try {
+    // await client.connect();
+
+// client.connect(() => {
+//     console.log('connecting to MOngo db');
+// }).catch(console.dir)
 
 
     const database = client.db("knowledgehub");
@@ -342,21 +343,24 @@ const verifyAdmin = (req, res, next) => {
       res.send(result);
     });
 
-//     await client.db("admin").command({ ping: 1 });
-//     console.log(
-//       "Pinged your deployment. You successfully connected to MongoDB!",
-//     );
-//   } finally {
-//     // await client.close();
-//   }
-// }
-// run().catch(console.dir);
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!",
+    // );
+  } finally {
+    // await client.close();
+  }
+}
+run().catch(console.dir);
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`);
+});
+
+
 
 // app.listen(port, () => {
-//   console.log(`Example app listening on port ${port}`);
-// });
-app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
-})
+//     console.log(`Example app listening on port ${port}`)
+// })
 
-module.exports = app;
+// module.exports = app;
