@@ -59,6 +59,12 @@ async function run() {
     };
 
     //-----------for admins only------------------------------
+    app.get("/api/all/users",async(req,res)=>{
+      const result = await userCollection.find({}).sort({ createdAt: -1 }).toArray();
+      res.send(result)
+    })
+
+    
 
     app.get("/api/all/tranjections", async (req, res) => {
       const result = await paymentCollection
