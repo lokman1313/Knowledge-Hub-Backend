@@ -81,11 +81,25 @@ async function run() {
 
     app.patch("/api/approveBooks/:id",async(req,res)=>{
       const id = req.params.id
-      const update = req.body
+      const updatedData = req.body
       const query ={
         _id : new ObjectId(id)
       }
-      const result = await bookcollection.updateOne(query,{$set : update})
+      const result = await bookcollection.updateOne(query,{ $set : updatedData})
+      res.send(result)
+    })
+
+    app.get("/api/allBooks",async(req,res)=>{
+      const result = await bookcollection.find({}).sort({ createdAt: -1 }).toArray()
+      res.send(result)
+    })
+
+    app.delete("/api/deleteBook/:id",async(req,res)=>{
+      const id = req.params.id
+      const query ={
+        _id : new ObjectId(id)
+      }
+      const result = await bookcollection.deleteOne(query)
       res.send(result)
     })
     //----------------------------------------------------------
@@ -181,6 +195,7 @@ async function run() {
         _id: new ObjectId(id),
       };
       const result = await bookcollection.updateOne(query, { $set: updated });
+      res.send(result)
     });
     app.patch("/api/book/publish/:id", async (req, res) => {
       const id = req.params.id;
@@ -189,6 +204,7 @@ async function run() {
         _id: new ObjectId(id),
       };
       const result = await bookcollection.updateOne(query, { $set: updated });
+      res.send(result)
     });
 
     //browse er jonno data get
