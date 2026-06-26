@@ -64,7 +64,15 @@ async function run() {
       res.send(result)
     })
 
-    
+    app.patch("/api/update/role/:id",async(req,res)=>{
+      const id = req.params.id
+      const updateData=req.body
+      const query ={
+        _id : new ObjectId(id)
+      }
+      const result = await userCollection.updateOne(query,{$set:updateData})
+      res.send(result)
+    })
 
     app.get("/api/all/tranjections", async (req, res) => {
       const result = await paymentCollection
