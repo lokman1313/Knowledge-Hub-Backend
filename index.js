@@ -57,14 +57,34 @@ async function run() {
       req.user = user;
       next();
     };
+const verifyUser = (req, res, next) => {
+  if (req.user.role !== "user") {
+    return res.status(403).json({
+      message: "Forbidden",
+    });
+  }
 
+  next();
+};
+const verifyLibrarian = (req, res, next) => {
+  if (req.user.role !== "librarian") {
+    return res.status(403).send({ message: "Forbidden" });
+  }
+  next();
+};
+const verifyAdmin = (req, res, next) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).send({ message: "Forbidden" });
+  }
+  next();
+};
     //-----------for admins only------------------------------
-    app.get("/api/all/users",async(req,res)=>{
+    app.get("/api/all/users",verifyToken,verifyAdmin,async(req,res)=>{
       const result = await userCollection.find({}).sort({ createdAt: -1 }).toArray();
       res.send(result)
     })
 
-    app.patch("/api/update/role/:id",async(req,res)=>{
+    app.patch("/api/update/role/:id",verifyToken,verifyAdmin,async(req,res)=>{
       const id = req.params.id
       const updateData=req.body
       const query ={
@@ -74,7 +94,16 @@ async function run() {
       res.send(result)
     })
 
-    app.get("/api/all/tranjections", async (req, res) => {
+    app.delete("/api/delete/user/:id",verifyToken,verifyAdmin,async(req,res)=>{
+      const id = req.params.id
+      const query ={
+        _id : new ObjectId(id)
+      }
+      const result = await userCollection.deleteOne(query)
+      res.send(result)
+    })
+
+    app.get("/api/all/tranjections",verifyToken,verifyAdmin, async (req, res) => {
       const result = await paymentCollection
         .find({})
         .sort({ createdAt: -1 })
@@ -82,7 +111,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/api/pendingBooks", async (req, res) => {
+    app.get("/api/pendingBooks",verifyToken,verifyAdmin, async (req, res) => {
       const query = { approvalStatus: "pending" };
 
       const result = await bookcollection
@@ -93,7 +122,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/api/approveBooks/:id",async(req,res)=>{
+    app.patch("/api/approveBooks/:id",verifyToken,verifyAdmin,async(req,res)=>{
       const id = req.params.id
       const updatedData = req.body
       const query ={
@@ -103,12 +132,12 @@ async function run() {
       res.send(result)
     })
 
-    app.get("/api/allBooks",async(req,res)=>{
+    app.get("/api/allBooks",verifyToken,verifyAdmin,async(req,res)=>{
       const result = await bookcollection.find({}).sort({ createdAt: -1 }).toArray()
       res.send(result)
     })
 
-    app.delete("/api/deleteBook/:id",async(req,res)=>{
+    app.delete("/api/deleteBook/:id",verifyToken,verifyAdmin,async(req,res)=>{
       const id = req.params.id
       const query ={
         _id : new ObjectId(id)
@@ -119,7 +148,7 @@ async function run() {
     //----------------------------------------------------------
 
     //book delevary releted query
-    app.get("/api/delevary/user", verifyToken, async (req, res) => {
+    app.get("/api/delevary/user", verifyToken, verifyUser,async (req, res) => {
       const userId = req.user._id.toString();
       const query = {
         userId,
@@ -129,7 +158,7 @@ async function run() {
       res.send(result);
     });
     //book delevary releted query
-    app.get("/api/notDelevary/user", verifyToken, async (req, res) => {
+    app.get("/api/notDelevary/user", verifyToken,verifyUser, async (req, res) => {
       const userId = req.user._id.toString();
 
       const result = await paymentCollection.find({ userId }).toArray();
@@ -137,7 +166,7 @@ async function run() {
     });
 
     //librarian delevary history
-    app.get("/api/delivery/librarian", verifyToken, async (req, res) => {
+    app.get("/api/delivery/librarian", verifyToken,verifyLibrarian, async (req, res) => {
       try {
         const librarianId = req.user._id.toString();
         const result = await paymentCollection.find({ librarianId }).toArray();
@@ -150,7 +179,7 @@ async function run() {
     });
 
     //delevary confrimetion
-    app.patch("/api/confrim/delevary/:id", async (req, res) => {
+    app.patch("/api/confrim/delevary/:id",verifyToken,verifyLibrarian, async (req, res) => {
       const id = req.params.id;
       const updatedData = req.body;
       const query = {
@@ -163,14 +192,14 @@ async function run() {
     });
 
     //payment releted
-    app.post("/api/payments", async (req, res) => {
+    app.post("/api/payments",verifyToken, async (req, res) => {
       const history = req.body;
       const result = await paymentCollection.insertOne(history);
       res.send(result);
     });
 
     //Books releted
-    app.post("/api/books", async (req, res) => {
+    app.post("/api/books",verifyToken,verifyLibrarian, async (req, res) => {
       const book = req.body;
       const newBook = {
         ...book,
@@ -180,7 +209,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/api/books", async (req, res) => {
+    app.get("/api/books",verifyToken,verifyLibrarian, async (req, res) => {
       const query = {};
 
       if (req.query.librarianId) {
@@ -202,7 +231,7 @@ async function run() {
     });
 
     //book patch releted
-    app.patch("/api/book/unpublish/:id", async (req, res) => {
+    app.patch("/api/book/unpublish/:id",verifyToken, async (req, res) => {
       const id = req.params.id;
       const updated = req.body;
       const query = {
@@ -211,7 +240,7 @@ async function run() {
       const result = await bookcollection.updateOne(query, { $set: updated });
       res.send(result)
     });
-    app.patch("/api/book/publish/:id", async (req, res) => {
+    app.patch("/api/book/publish/:id",verifyToken, async (req, res) => {
       const id = req.params.id;
       const updated = req.body;
       const query = {
@@ -258,7 +287,7 @@ async function run() {
     });
 
     //review releted apis
-    app.post("/api/reviews", async (req, res) => {
+    app.post("/api/reviews",verifyToken,verifyUser, async (req, res) => {
       const review = req.body;
       const newReview = {
         ...review,
@@ -267,6 +296,11 @@ async function run() {
       const result = await reviewCollection.insertOne(newReview);
       res.send(result);
     });
+
+    app.get("/api/all/reviews",verifyToken,verifyAdmin,async(req,res)=>{
+      const result = await reviewCollection.find().sort({ createdAt: -1 }).toArray()
+      res.send(result)
+    })
 
     app.get("/api/reviews/:bookId", async (req, res) => {
       const bookId = req.params.bookId;
@@ -280,7 +314,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/reviews/:id", async (req, res) => {
+    app.patch("/reviews/:id",verifyToken,verifyUser, async (req, res) => {
       const id = req.params.id;
       const updatedData = req.body;
       const quari = {
@@ -292,7 +326,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("/api/delete/review/:id", async (req, res) => {
+    app.delete("/api/delete/review/:id",verifyToken,verifyUser, async (req, res) => {
       const id = req.params.id;
 
       const query = {
